@@ -104,12 +104,12 @@ def send_email(receiver, pdf_file):
         )
 
         try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(
-                os.environ.get("EMAIL_ADDRESS"),
-                os.environ.get("EMAIL_PASSWORD")
-            )
-            smtp.send_message(msg)
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                smtp.login(
+                    os.environ.get("EMAIL_ADDRESS"),
+                    os.environ.get("EMAIL_PASSWORD")
+                )
+                smtp.send_message(msg)
                 except Exception as e:
                     print(f"Email sending failed: {e}")
 
