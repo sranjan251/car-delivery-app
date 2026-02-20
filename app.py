@@ -72,24 +72,17 @@ def generate_pdf(data):
     elements.append(title)
     elements.append(Spacer(1, 0.2*inch))
     
-    # === DELIVERY INFORMATION TABLE ===
+    # === DELIVERY INFORMATION TABLE WITH SEPARATE VEHICLE DETAILS ===
     table_data = [
         ["Buyer Name:", data.get("buyer_name", "")],
         ["Buyer Address:", data.get("buyer_address", "")],
         ["Buyer Contact:", data.get("buyer_email", "")],
-        ["Vehicle Details:", f"{data.get('car_make', '')} {data.get('car_model', '')} ({data.get('car_year', '')})"],
-        ["Seller Name:", data.get("seller_name", "")],
-        ["Seller Address:", ""],  # Can be added if needed
-        ["Seller Contact:", data.get("seller_email", "")],
-        ["Delivery Date:", datetime.now().strftime("%d %B %Y")],
-    ]
-    
-    # Add car details in a more detailed format
-    table_data_detailed = [
-        ["Buyer Name:", data.get("buyer_name", "")],
-        ["Buyer Address:", data.get("buyer_address", "")],
-        ["Buyer Contact:", data.get("buyer_email", "")],
-        ["Vehicle Details:", f"{data.get('car_make', '')} {data.get('car_model', '')} ({data.get('car_year', '')})<br/>VIN: {data.get('vin', '')}<br/>Reg No: {data.get('reg_no', '')}<br/>Odometer: {data.get('odometer', '')}"],
+        ["Car Make:", data.get("car_make", "")],
+        ["Car Model:", data.get("car_model", "")],
+        ["Year:", data.get("car_year", "")],
+        ["VIN:", data.get("vin", "")],
+        ["Registration No:", data.get("reg_no", "")],
+        ["Odometer Reading:", data.get("odometer", "")],
         ["Seller Name:", data.get("seller_name", "")],
         ["Seller Address:", ""],
         ["Seller Contact:", data.get("seller_email", "")],
@@ -97,7 +90,7 @@ def generate_pdf(data):
     ]
     
     # Build table with proper styling
-    table = Table(table_data_detailed, colWidths=[2.2*inch, 4.3*inch])
+    table = Table(table_data, colWidths=[2.2*inch, 4.3*inch])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0f0f0')),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
