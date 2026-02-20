@@ -51,6 +51,7 @@ def generate_pdf(data):
         ["Seller Email", data["seller_email"]],
         ["Buyer Name", data["buyer_name"]],
         ["Buyer Email", data["buyer_email"]],
+            ["Buyer Address", data["buyer_address"]],
         ["Car Make", data["car_make"]],
         ["Car Model", data["car_model"]],
         ["Year", data["car_year"]],
