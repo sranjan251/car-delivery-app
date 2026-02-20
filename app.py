@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, send_file
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, PageBreak
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -9,84 +9,151 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-LOGO_PATH = "static/logo.jpg" # Put logo inside static folder
+LOGO_PATH = "static/logo.jpg"  # Put logo inside static folder
 
 def generate_pdf(data):
     # Create PDF in memory (BytesIO)
     pdf_buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         pdf_buffer,
-        rightMargin=40,
-        leftMargin=40,
-        topMargin=40,
-        bottomMargin=40
+        rightMargin=0.5*inch,
+        leftMargin=0.5*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch,
+        pagesize=(8.5*inch, 11*inch)
     )
+    
     elements = []
     styles = getSampleStyleSheet()
     
-    # === HEADER WITH LOGO (Right aligned) ===
-    logo = Image(LOGO_PATH, width=2.5*inch, height=0.8*inch)
+    # === TOP HEADER WITH LOGO AND CONTACT INFO ===
+    logo_style = ParagraphStyle(
+        'LogoStyle',
+        parent=styles['Normal'],
+        alignment=0,  # Left align
+        fontSize=10,
+        leading=12
+    )
+    
+    contact_para = Paragraph(
+        "<b>KAM CARZ</b><br/>Email: kunalmehta@kamcarz.com<br/>Website: www.kamcarz.com",
+        logo_style
+    )
+    
+    # Create header table with logo on left and contact on right
     header_table = Table(
-        [
-            [
-                Paragraph("**CAR DELIVERY NOTE**", styles["Title"]),
-                logo
-            ]
-        ],
-        colWidths=[4*inch, 2*inch]
+        [[contact_para, ""]],
+        colWidths=[4*inch, 2*inch],
+        rowHeights=[0.8*inch]
     )
     header_table.setStyle(TableStyle([
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
         ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
         ('LEFTPADDING', (0, 0), (-1, -1), 0),
         ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
     ]))
     elements.append(header_table)
-    elements.append(Spacer(1, 0.4 * inch))
     
-    # === DELIVERY INFO TABLE ===
+    # === MAIN HEADING ===
+    title_style = ParagraphStyle(
+        'TitleStyle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        alignment=1,  # Center align
+        spaceAfter=10,
+        textColor=colors.black,
+        fontName='Helvetica-Bold'
+    )
+    
+    title = Paragraph("CAR DELIVERY NOTE", title_style)
+    elements.append(title)
+    elements.append(Spacer(1, 0.2*inch))
+    
+    # === DELIVERY INFORMATION TABLE ===
     table_data = [
-        ["Delivery Date", datetime.now().strftime("%d %B %Y")],
-        ["Seller Name", data["seller_name"]],
-        ["Seller Email", data["seller_email"]],
-        ["Buyer Name", data["buyer_name"]],
-        ["Buyer Email", data["buyer_email"]],
-    ["Buyer Address", data.get("buyer_address", "")],        ["Car Make", data["car_make"]],
-        ["Car Model", data["car_model"]],
-        ["Year", data["car_year"]],
-        ["VIN", data["vin"]],
-        ["Registration No", data["reg_no"]],
-        ["Odometer Reading", data["odometer"]],
+        ["Buyer Name:", data.get("buyer_name", "")],
+        ["Buyer Address:", data.get("buyer_address", "")],
+        ["Buyer Contact:", data.get("buyer_email", "")],
+        ["Vehicle Details:", f"{data.get('car_make', '')} {data.get('car_model', '')} ({data.get('car_year', '')})"],
+        ["Seller Name:", data.get("seller_name", "")],
+        ["Seller Address:", ""],  # Can be added if needed
+        ["Seller Contact:", data.get("seller_email", "")],
+        ["Delivery Date:", datetime.now().strftime("%d %B %Y")],
     ]
-    table = Table(table_data, colWidths=[2.5*inch, 3.5*inch])
+    
+    # Add car details in a more detailed format
+    table_data_detailed = [
+        ["Buyer Name:", data.get("buyer_name", "")],
+        ["Buyer Address:", data.get("buyer_address", "")],
+        ["Buyer Contact:", data.get("buyer_email", "")],
+        ["Vehicle Details:", f"{data.get('car_make', '')} {data.get('car_model', '')} ({data.get('car_year', '')})<br/>VIN: {data.get('vin', '')}<br/>Reg No: {data.get('reg_no', '')}<br/>Odometer: {data.get('odometer', '')}"],
+        ["Seller Name:", data.get("seller_name", "")],
+        ["Seller Address:", ""],
+        ["Seller Contact:", data.get("seller_email", "")],
+        ["Delivery Date:", datetime.now().strftime("%d %B %Y")],
+    ]
+    
+    # Build table with proper styling
+    table = Table(table_data_detailed, colWidths=[2.2*inch, 4.3*inch])
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0f0f0')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
         ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ('TOPPADDING', (0, 0), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#f9f9f9')]),
     ]))
+    
     elements.append(table)
-    elements.append(Spacer(1, 0.5 * inch))
+    elements.append(Spacer(1, 0.4*inch))
     
     # === SIGNATURE SECTION ===
-    signature_table = Table(
+    sig_style = ParagraphStyle(
+        'SigStyle',
+        parent=styles['Normal'],
+        fontSize=9,
+        alignment=0
+    )
+    
+    sig_table = Table(
         [
             [
-                "Seller Signature: ______________________",
-                "Buyer Signature: ______________________"
+                Paragraph("Buyer Signature<br/><br/>_________________________", sig_style),
+                Paragraph("Seller Signature<br/><br/>_________________________", sig_style)
             ]
         ],
-        colWidths=[3*inch, 3*inch]
+        colWidths=[3.25*inch, 3.25*inch]
     )
-    signature_table.setStyle(TableStyle([
-        ('TOPPADDING', (0, 0), (-1, -1), 30),
+    sig_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
     ]))
-    elements.append(signature_table)
     
+    elements.append(sig_table)
+    
+    # === FOOTER ===
+    elements.append(Spacer(1, 0.3*inch))
+    footer_style = ParagraphStyle(
+        'FooterStyle',
+        parent=styles['Normal'],
+        fontSize=8,
+        alignment=1,  # Center
+        textColor=colors.grey
+    )
+    footer = Paragraph("www.kamcarz.com", footer_style)
+    elements.append(footer)
+    
+    # Build PDF
     doc.build(elements)
     pdf_buffer.seek(0)
     return pdf_buffer
