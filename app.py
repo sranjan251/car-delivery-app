@@ -1,21 +1,21 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Image
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.platypus import TableStyle
-import smtplib
-from email.message import EmailMessage
-import os
+import io
 from datetime import datetime
 
 app = Flask(__name__)
 
-LOGO_PATH = "static/logo.jpg"  # Put logo inside static folder
+LOGO_PATH = "static/logo.jpg" # Put logo inside static folder
 
-def generate_pdf(data, filename):
+def generate_pdf(data):
+    # Create PDF in memory (BytesIO)
+    pdf_buffer = io.BytesIO()
     doc = SimpleDocTemplate(
-        filename,
+        pdf_buffer,
         rightMargin=40,
         leftMargin=40,
         topMargin=40,
@@ -23,7 +23,7 @@ def generate_pdf(data, filename):
     )
     elements = []
     styles = getSampleStyleSheet()
-
+    
     # === HEADER WITH LOGO (Right aligned) ===
     logo = Image(LOGO_PATH, width=2.5*inch, height=0.8*inch)
     header_table = Table(
@@ -43,7 +43,7 @@ def generate_pdf(data, filename):
     ]))
     elements.append(header_table)
     elements.append(Spacer(1, 0.4 * inch))
-
+    
     # === DELIVERY INFO TABLE ===
     table_data = [
         ["Delivery Date", datetime.now().strftime("%d %B %Y")],
@@ -71,7 +71,7 @@ def generate_pdf(data, filename):
     ]))
     elements.append(table)
     elements.append(Spacer(1, 0.5 * inch))
-
+    
     # === SIGNATURE SECTION ===
     signature_table = Table(
         [
@@ -86,42 +86,22 @@ def generate_pdf(data, filename):
         ('TOPPADDING', (0, 0), (-1, -1), 30),
     ]))
     elements.append(signature_table)
+    
     doc.build(elements)
-
-def send_email(receiver, pdf_file):
-    msg = EmailMessage()
-    msg["Subject"] = "Car Delivery Note"
-    msg["From"] = os.environ.get("EMAIL_ADDRESS")
-    msg["To"] = receiver
-    msg.set_content("Please find attached the car delivery note.")
-
-    with open(pdf_file, "rb") as f:
-        msg.add_attachment(
-            f.read(),
-            maintype="application",
-            subtype="pdf",
-            filename="delivery_note.pdf"
-        )
-
-        try:
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-                smtp.login(
-                    os.environ.get("EMAIL_ADDRESS"),
-                    os.environ.get("EMAIL_PASSWORD")
-                )
-                smtp.send_message(msg)
-                except Exception as e:
-                    print(f"Email sending failed: {e}")
+    pdf_buffer.seek(0)
+    return pdf_buffer
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         data = request.form
-        filename = "delivery_note.pdf"
-        generate_pdf(data, filename)
-        send_email(data["buyer_email"], filename)
-        send_email(data["seller_email"], filename)
-        return "Delivery Note Generated and Sent Successfully!"
+        pdf_buffer = generate_pdf(data)
+        return send_file(
+            pdf_buffer,
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=f"delivery_note_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        )
     return render_template("index.html")
 
 if __name__ == "__main__":
