@@ -84,8 +84,8 @@ def generate_pdf(data):
         ["Registration No:", data.get("reg_no", "")],
         ["Odometer Reading:", data.get("odometer", "")],
         ["Seller Name:", data.get("seller_name", "")],
-        ["Seller Address:", ""],
-        ["Seller Contact:", data.get("seller_email", "")],
+    ["Seller Address:", data.get("seller_address", "")],
+            ["Seller Contact:", data.get("seller_email", "")],
         ["Delivery Date:", datetime.now().strftime("%d %B %Y")],
     ]
     
