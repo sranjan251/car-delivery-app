@@ -40,8 +40,9 @@ def generate_pdf(data):
     
     try:
         if os.path.exists(LOGO_PATH):
-            header_logo = Image(LOGO_PATH, width=1.2*inch, height=1*inch)
-        else:
+            header_logo = 47
+ header_logo = Image(LOGO_PATH, width=1.38*inch, height=1*inch)
+else:
             logo_style = ParagraphStyle(
                 'LogoPlaceholder',
                 parent=styles['Normal'],
@@ -73,7 +74,10 @@ def generate_pdf(data):
     )
     
     # Create header table with logo and contact
-    header_table = Table(
+    75
+77
+44
+(
         [[header_logo, header_contact]],
         colWidths=[2*inch, 5.47*inch],
         rowHeights=[header_height]
