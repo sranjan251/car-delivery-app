@@ -159,8 +159,7 @@ def index():
         return send_file(
             pdf_buffer,
             mimetype="application/pdf",
-            as_attachment=True,
-            download_name=f"delivery_note_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            as_attachment=False,            download_name=f"delivery_note_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
         )
     return render_template("index.html")
 
