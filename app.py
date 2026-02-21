@@ -1,50 +1,82 @@
 from flask import Flask, render_template, request, send_file, Response, make_response
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, PageBreak, Image
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.platypus import TableStyle
 import io
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 
 LOGO_PATH = "static/logo.jpg"  # Put logo inside static folder
 
 def generate_pdf(data):
-    # Create PDF in memory (BytesIO)
+    # Create PDF in memory (BytesIO) with A4 dimensions
     pdf_buffer = io.BytesIO()
+    # A4 size: 8.27 x 11.69 inches
     doc = SimpleDocTemplate(
         pdf_buffer,
-        rightMargin=0.5*inch,
-        leftMargin=0.5*inch,
-        topMargin=0.5*inch,
-        bottomMargin=0.5*inch,
-        pagesize=(8.5*inch, 11*inch)
+        rightMargin=0.4*inch,
+        leftMargin=0.4*inch,
+        topMargin=0.3*inch,
+        bottomMargin=0.3*inch,
+        pagesize=(8.27*inch, 11.69*inch)  # A4 dimensions
     )
     
     elements = []
     styles = getSampleStyleSheet()
     
-    # === TOP HEADER WITH LOGO AND CONTACT INFO ===
-    logo_style = ParagraphStyle(
-        'LogoStyle',
+    # Calculate dimensions based on A4 page
+    page_height = 11.69 * inch
+    header_height = page_height * 0.20  # 20% for header
+    footer_height = page_height * 0.05  # 5% for footer
+    
+    # === HEADER (20% of page) ===
+    # Header with logo on left and contact info on right
+    header_logo = ""
+    header_contact = ""
+    
+    try:
+        if os.path.exists(LOGO_PATH):
+            header_logo = Image(LOGO_PATH, width=1.2*inch, height=1*inch)
+        else:
+            logo_style = ParagraphStyle(
+                'LogoPlaceholder',
+                parent=styles['Normal'],
+                fontSize=12,
+                textColor=colors.grey
+            )
+            header_logo = Paragraph("[Logo]", logo_style)
+    except:
+        logo_style = ParagraphStyle(
+            'LogoPlaceholder',
+            parent=styles['Normal'],
+            fontSize=12,
+            textColor=colors.grey
+        )
+        header_logo = Paragraph("[Logo]", logo_style)
+    
+    contact_style = ParagraphStyle(
+        'ContactStyle',
         parent=styles['Normal'],
-        alignment=0,  # Left align
-        fontSize=10,
-        leading=12
+        alignment=2,  # Right align
+        fontSize=9,
+        leading=12,
+        textColor=colors.black
     )
     
-    contact_para = Paragraph(
+    header_contact = Paragraph(
         "<b>KAM CARZ</b><br/>Email: kunalmehta@kamcarz.com<br/>Website: www.kamcarz.com",
-        logo_style
+        contact_style
     )
     
-    # Create header table with logo on left and contact on right
+    # Create header table with logo and contact
     header_table = Table(
-        [[contact_para, ""]],
-        colWidths=[4*inch, 2*inch],
-        rowHeights=[0.8*inch]
+        [[header_logo, header_contact]],
+        colWidths=[2*inch, 5.47*inch],
+        rowHeights=[header_height]
     )
     header_table.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
@@ -54,16 +86,18 @@ def generate_pdf(data):
         ('RIGHTPADDING', (0, 0), (-1, -1), 0),
         ('TOPPADDING', (0, 0), (-1, -1), 0),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+        ('LINEBELOW', (0, 0), (-1, -1), 1, colors.lightgrey),
     ]))
     elements.append(header_table)
+    elements.append(Spacer(1, 0.15*inch))
     
-    # === MAIN HEADING ===
+    # === TITLE (LEFT ALIGNED) ===
     title_style = ParagraphStyle(
         'TitleStyle',
         parent=styles['Heading1'],
-        fontSize=24,
-        alignment=1,  # Center align
-        spaceAfter=10,
+        fontSize=20,
+        alignment=0,  # Left align
+        spaceAfter=15,
         textColor=colors.black,
         fontName='Helvetica-Bold'
     )
@@ -72,7 +106,7 @@ def generate_pdf(data):
     elements.append(title)
     elements.append(Spacer(1, 0.2*inch))
     
-    # === DELIVERY INFORMATION TABLE WITH SEPARATE VEHICLE DETAILS ===
+    # === DELIVERY INFORMATION TABLE ===
     table_data = [
         ["Buyer Name:", data.get("buyer_name", "")],
         ["Buyer Address:", data.get("buyer_address", "")],
@@ -84,18 +118,18 @@ def generate_pdf(data):
         ["Registration No:", data.get("reg_no", "")],
         ["Odometer Reading:", data.get("odometer", "")],
         ["Seller Name:", data.get("seller_name", "")],
-    ["Seller Address:", data.get("seller_address", "")],
-            ["Seller Contact:", data.get("seller_email", "")],
+        ["Seller Address:", data.get("seller_address", "")],
+        ["Seller Contact:", data.get("seller_email", "")],
         ["Delivery Date:", datetime.now().strftime("%d %B %Y")],
     ]
     
     # Build table with proper styling
-    table = Table(table_data, colWidths=[2.2*inch, 4.3*inch])
+    table = Table(table_data, colWidths=[2.2*inch, 5.47*inch])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0f0f0')),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
         ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
@@ -106,9 +140,9 @@ def generate_pdf(data):
     ]))
     
     elements.append(table)
-    elements.append(Spacer(1, 0.4*inch))
+    elements.append(Spacer(1, 0.3*inch))
     
-    # === SIGNATURE SECTION ===
+    # === SIGNATURE SECTION (space above text) ===
     sig_style = ParagraphStyle(
         'SigStyle',
         parent=styles['Normal'],
@@ -119,11 +153,11 @@ def generate_pdf(data):
     sig_table = Table(
         [
             [
-                Paragraph("Buyer Signature<br/><br/>_________________________", sig_style),
-                Paragraph("Seller Signature<br/><br/>_________________________", sig_style)
+                Paragraph("_________________________<br/><br/>Buyer Signature", sig_style),
+                Paragraph("_________________________<br/><br/>Seller Signature", sig_style)
             ]
         ],
-        colWidths=[3.25*inch, 3.25*inch]
+        colWidths=[3.635*inch, 3.635*inch]
     )
     sig_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -134,17 +168,46 @@ def generate_pdf(data):
     
     elements.append(sig_table)
     
-    # === FOOTER ===
-    elements.append(Spacer(1, 0.3*inch))
-    footer_style = ParagraphStyle(
-        'FooterStyle',
+    # === FOOTER (5% of page) ===
+    # Push remaining space
+    elements.append(Spacer(1, 0.4*inch))
+    
+    footer_style_left = ParagraphStyle(
+        'FooterStyleLeft',
         parent=styles['Normal'],
         fontSize=8,
-        alignment=1,  # Center
+        alignment=0,  # Left align
         textColor=colors.grey
     )
-    footer = Paragraph("www.kamcarz.com", footer_style)
-    elements.append(footer)
+    
+    footer_style_right = ParagraphStyle(
+        'FooterStyleRight',
+        parent=styles['Normal'],
+        fontSize=8,
+        alignment=2,  # Right align
+        textColor=colors.grey
+    )
+    
+    footer_table = Table(
+        [
+            [
+                Paragraph("www.kamcarz.com", footer_style_left),
+                Paragraph("Powered by Neovertx", footer_style_right)
+            ]
+        ],
+        colWidths=[4.135*inch, 4.135*inch]
+    )
+    footer_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'BOTTOM'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('LINEABOVE', (0, 0), (-1, -1), 1, colors.lightgrey),
+    ]))
+    
+    elements.append(footer_table)
     
     # Build PDF
     doc.build(elements)
