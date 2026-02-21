@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, Response, make_response
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, PageBreak
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib import colors
@@ -156,11 +156,14 @@ def index():
     if request.method == "POST":
         data = request.form
         pdf_buffer = generate_pdf(data)
-        return send_file(
-            pdf_buffer,
-            mimetype="application/pdf",
-            as_attachment=False,            download_name=f"delivery_note_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        )
+        response = make_response(pdf_buffer.getvalue())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=delivery_note_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        response.headers['Content-Length'] = len(pdf_buffer.getvalue())
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
     return render_template("index.html")
 
 if __name__ == "__main__":
