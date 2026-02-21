@@ -80,7 +80,7 @@ def generate_pdf(data):
         ["Car Make:", data.get("car_make", "")],
         ["Car Model:", data.get("car_model", "")],
         ["Year:", data.get("car_year", "")],
-        ["VIN:", data.get("vin", "")],
+        ["Chasis No.:", data.get("Chasis No.", "")],
         ["Registration No:", data.get("reg_no", "")],
         ["Odometer Reading:", data.get("odometer", "")],
         ["Seller Name:", data.get("seller_name", "")],
