@@ -75,10 +75,10 @@ def generate_pdf(data):
         contact_style
     )
 
-    # Create header table with logo and contact (70:30 split)
+    # Create header table with logo and contact (80:20 split)
     total_header_width = 2 * inch + 5.47 * inch  # keep same total width as content
-    logo_col_width = total_header_width * 0.70
-    contact_col_width = total_header_width * 0.30
+    logo_col_width = total_header_width * 0.80
+    contact_col_width = total_header_width * 0.20
 
     header_table = Table(
         [[header_logo, header_contact]],
@@ -117,6 +117,7 @@ def generate_pdf(data):
     table_data = [
         ["Buyer Name:", data.get("buyer_name", "")],
         ["Buyer Address:", data.get("buyer_address", "")],
+        ["PAN/ Aadhar Card Number:", data.get("buyer_pan_aadhar", "")],
         ["Buyer Contact:", data.get("buyer_email", "")],
         ["Car Make:", data.get("car_make", "")],
         ["Car Model:", data.get("car_model", "")],
