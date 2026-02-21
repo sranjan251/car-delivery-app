@@ -30,7 +30,7 @@ def generate_pdf(data):
     
     # Calculate dimensions based on A4 page
     page_height = 11.69 * inch
-    header_height = page_height * 0.20  # 20% for header
+    header_height = page_height * 0.10  # 10% for header
     footer_height = page_height * 0.05  # 5% for footer
     
     # === HEADER (20% of page) ===
